@@ -7,13 +7,12 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "fiizii",
   "license": "ISC",
   "dependencies": {
     "cat-loggr": "^1.2.2",
     "discord.js": "^14.15.2",
     "dotenv": "^16.4.5",
-    "node-llama-cpp": "^2.8.10",
     "simple-json-db": "^2.0.0"
   }
 }
