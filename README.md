@@ -1,6 +1,10 @@
 incomplete + speedran the programming for this.
 <br />
 nsfw ([Petplay](https://www.google.com/search?q=What+is+petplay+and+why+do+people+enjoy+it%3F) themed) bot. be warned lol!
+<br />
+Ollama is a dependancy, using the model: qwen:7b
+<br />
+An install script will be provided in the near future.
 # Muzzle Bot Command Guide
 
 ### Commands Overview
