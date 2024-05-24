@@ -1,6 +1,6 @@
 incomplete + speedran the programming for this.
 <br />
-nsfw (petplay themed) bot. be warned lol!
+nsfw ([Petplay](https://www.google.com/search?q=What+is+petplay+and+why+do+people+enjoy+it%3F) themed) bot. be warned lol!
 # Muzzle Bot Command Guide
 
 ### Commands Overview
