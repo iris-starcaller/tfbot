@@ -1,0 +1,11 @@
+# Ignore node_modules
+node_modules/
+
+# Ignore databases in /shared
+/shared/*.json
+
+# Ignore .env file
+.env
+
+# Ignore todo
+todo
