@@ -93,6 +93,16 @@ module.exports = {
         )
         .addSubcommand(subcommand =>
             subcommand
+                .setName('allowunmuzzle')
+                .setDescription('Toggle allowing others to unmuzzle you.')
+                .addBooleanOption(option =>
+                    option.setName('allow')
+                        .setDescription('Whether to allow others to unmuzzle you.')
+                        .setRequired(true)
+                )
+        )
+        .addSubcommand(subcommand =>
+            subcommand
                 .setName('bypass')
                 .setDescription('Toggle the ability to bypass the muzzle with {}.')
                 .addBooleanOption(option =>
@@ -114,6 +124,7 @@ module.exports = {
             censorType: 'spoiler',
             type: 'dog',
             allowBypass: false,
+            allowUnmuzzle: true,
         };
 
         const subcommand = interaction.options.getSubcommand();
@@ -148,14 +159,19 @@ module.exports = {
                 const _censorType = userDBentry.censorType || 'spoiler';
                 const _type = userDBentry.type || 'dog';
                 const _allowBypass = userDBentry.allowBypass || false;
+                const _allowUnmuzzle = userDBentry.allowUnmuzzle || false;
                 const config = {
                     blacklist: _blacklist,
                     whitelist: _whitelist,
                     censorType: _censorType,
                     type: _type,
                     allowBypass: _allowBypass,
+                    allowUnmuzzle: _allowUnmuzzle,
                 };
                 return await interaction.reply({ content: '```json\n' + JSON.stringify(config, null, 4) + '```', ephemeral: true });
+            case 'allowunmuzzle':
+                userDBentry.allowUnmuzzle = allow;
+                break;
             default:
                 return await interaction.reply({ content: 'Invalid subcommand.', ephemeral: true });
         }

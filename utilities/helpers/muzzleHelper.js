@@ -7,7 +7,6 @@ const sjdb = require("simple-json-db");
 // Initialize external modules and JSON database
 const llama = require(path.join(__dirname, "..", "etc", "llama.js")).init();
 const db = new sjdb(path.join(__dirname, "..", "..", "shared", "muzzled.json"));
-
 // Utility function to safely parse JSON
 function safeParseJSON(json) {
     try {
@@ -155,6 +154,8 @@ function muzzle(member, time = 1000 * 60 * 60) {
  * @param {object} member - The member to unmuzzle.
  */
 function unmuzzle(member) {
+    const userOptions = new sjdb(path.join(__dirname, "..", "..", "shared", "config.json"));
+    if (userOptions.get(member.id)) { if (userOptions.get(member.id).allowUnmuzzle == false) return; }// Check if user allows others to unmuzzle them and return if not
     db.delete(member.id);
 }
 
