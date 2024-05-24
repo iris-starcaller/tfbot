@@ -35,25 +35,25 @@ module.exports = {
                 .setDescription("The type of muzzle to use. Default=dog")
                 .setRequired(false)),
     async execute(interaction) {
-        if (!interaction.guild) return await interaction.reply('This command can only be used in a server.', { ephemeral: true });
+        if (!interaction.guild) return await interaction.reply({ content: 'This command can only be used in a server.',  ephemeral: true });
         if (interaction.user.id !== "1166312840861331459") {
-            if(interaction.member.permissions.has(PermissionFlagsBits.ManageMessages) === false) return await interaction.reply('Needy needy dog! ||(in all seriousness, you can ask a mod to have it put on yah, or use muzzleme.)||', { ephemeral: true });
+            if(interaction.member.permissions.has(PermissionFlagsBits.ManageMessages) === false) return await interaction.reply({ content: 'Needy needy dog! ||(in all seriousness, you can ask a mod to have it put on yah, or use muzzleme.)||',  ephemeral: true });
         }
         const user = interaction.options.getUser('user');
-        if (!user) return await interaction.reply('Please specify a user to muzzle.', { ephemeral: true });
+        if (!user) return await interaction.reply({ content: 'Please specify a user to muzzle.',  ephemeral: true });
         const member = interaction.guild.members.cache.get(user.id);
-        if (!member) return await interaction.reply('User is not in this server.', { ephemeral: true });
+        if (!member) return await interaction.reply({ content: 'User is not in this server.',  ephemeral: true });
         const stime = interaction.options.getString('time');
         const time = parseInt(stime);
         let timeInMs = 3600000;
         if (time) {
-            if (isNaN(time)) return await interaction.reply('Cmon pup, provide a valid number (in minutes) for the time.', { ephemeral: true });
+            if (isNaN(time)) return await interaction.reply({ content: 'Cmon pup, provide a valid number (in minutes) for the time.',  ephemeral: true });
             timeInMs = time * 60000;
             console.log(timeInMs);
         }
         
 
         await muzzleHelper.muzzle(member, timeInMs);
-        await interaction.reply('Muzzled that silly puppo.', { ephemeral: true });
+        await interaction.reply({ content: 'Muzzled that silly puppo.'});
     },
 };

@@ -31,24 +31,24 @@ module.exports = {
                 .setDescription("How long do you want to be a good boy for? (Specify time in minutes) Default=1hr")
                 .setRequired(false)),
     async execute(interaction) {
-        if (!interaction.guild) return await interaction.reply('This command can only be used in a server.', { ephemeral: true });
+        if (!interaction.guild) return await interaction.reply({ content: 'This command can only be used in a server.',  ephemeral: true });
         const user = interaction.user;
-        if (!user) return await interaction.reply('what the.. are you even real?', { ephemeral: true });
+        if (!user) return await interaction.reply({ content: 'what the.. are you even real?', ephemeral: true });
         const member = interaction.guild.members.cache.get(user.id);
-        if (!member) return await interaction.reply('User is not in this server.', { ephemeral: true });
+        if (!member) return await interaction.reply({ content: 'User is not in this server.', ephemeral: true });
         const stime = interaction.options.getString('time');
         const time = parseInt(stime);
         let timeInMs = 3600000;
         let formattedTime = '1 hour';
         
         if (time) {
-            if (isNaN(time)) return await interaction.reply('Cmon pup, provide a valid number (in minutes) for the time.', { ephemeral: true });
+            if (isNaN(time)) return await interaction.reply({ content: 'Cmon pup, provide a valid number (in minutes) for the time.', ephemeral: true });
             timeInMs = time * 60000;
             formattedTime = timeDifference(time);
             console.log(timeInMs);
         }
         
         await muzzleHelper.muzzle(member, timeInMs);
-        await interaction.reply(`<@${user.id}> decided that they should be a good dog and put on their own muzzle~! They’ve decided that they will be such a good dog for ${formattedTime}.`, { ephemeral: true });
+        await interaction.reply(`<@${user.id}> decided that they should be a good dog and put on their own muzzle~! They’ve decided that they will be such a good dog for ${formattedTime}.`);
     },
 };
