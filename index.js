@@ -2,23 +2,28 @@ require('dotenv').config();
 
 const Cat = require('cat-loggr');
 const log = new Cat();
-const muzzleHelper = require('./utilities/helpers/muzzleHelper.js');
-const sjdb = require('simple-json-db');
+const muzzleHelper = require('./utilities/helpers/muzzleHelper');
+const SimpleJsonDB = require('simple-json-db');
 const fs = require('node:fs');
 const path = require('node:path');
-const Discord = require('discord.js');
-const client = new Discord.Client({
+const { Client, GatewayIntentBits, Events, Collection } = require('discord.js');
+
+// Initialize Discord client with necessary intents
+const client = new Client({
     intents: [
-        Discord.GatewayIntentBits.MessageContent,
-        Discord.GatewayIntentBits.DirectMessages,
-        Discord.GatewayIntentBits.Guilds,
-        Discord.GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.DirectMessages,
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
     ]
-})
-client.commands = new Discord.Collection();
+});
+
+// Initialize commands collection
+client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
 
+// Load commands from folders
 for (const folder of commandFolders) {
     const commandsPath = path.join(foldersPath, folder);
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
@@ -32,37 +37,38 @@ for (const folder of commandFolders) {
             log.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
         }
     }
-} // ty discord.js guide for this
+}
 
-
-client.once(Discord.Events.ClientReady, _cl => {
+// Log when the client is ready
+client.once(Events.ClientReady, client => {
     log.info(`Logged in as ${client.user.tag}`);
-})
-function sna(str) {
+});
+
+/**
+ * Sanitize a string by removing non-alphanumeric characters.
+ * @param {string} str - The input string.
+ * @returns {string} - The sanitized string.
+ */
+function sanitizeString(str) {
     return str.replace(/[^a-zA-Z0-9]/g, '');
 }
-function blacklistF(message, options) {
-    if (options) {
-        if (options.blacklist) {
-            if (options.blacklist.length === 0) {
-                return message;
-            }
-        } else {
-            return message;
-        }
-    }
-    return new Promise((resolve, reject) => {
-        try {
-            const blacklist = options.blacklist
-            if (!blacklist) return message;
-            if (!message) return message;
-            if (blacklist.length === 0) return message;
 
-            const censor = options.censorType || "spoiler"
+/**
+ * Censor blacklisted words in a message.
+ * @param {string} message - The input message.
+ * @param {object} options - The options object containing blacklist and censor type.
+ * @returns {Promise<string>} - The censored message.
+ */
+function blacklistFilter(message, options) {
+    return new Promise((resolve) => {
+        try {
+            const { blacklist = [], censorType = 'spoiler' } = options || {};
+            if (blacklist.length === 0 || !message) return resolve(message);
+
             const messageArray = message.split(' ');
             const censoredMessage = messageArray.map(word => {
-                if (blacklist.includes(sna(word.toLowerCase()))) {
-                    switch (censor) {
+                if (blacklist.includes(sanitizeString(word.toLowerCase()))) {
+                    switch (censorType) {
                         case 'spoiler':
                             return `||${word}||`;
                         case 'remove':
@@ -76,92 +82,83 @@ function blacklistF(message, options) {
                 return word;
             });
             resolve(censoredMessage.join(' '));
-        }
-        catch (error) {
+        } catch {
             resolve(message);
         }
     });
 }
 
-client.on(Discord.Events.MessageCreate, async message => {
+// Handle incoming messages
+client.on(Events.MessageCreate, async message => {
     if (message.channel.type === 11 || message.channel.type === 'GUILD_PRIVATE_THREAD') return;
-    const muzzled = new sjdb('shared/muzzled.json');
-    const options = new sjdb('shared/config.json');
-    if (!message.guild) return;
-    if (message.author.bot) return;
-    if (muzzled.get(message.author.id)) {
-        if (!message.content) return;
-        const muzzleTime = muzzled.get(message.author.id);
+
+    const muzzledDB = new SimpleJsonDB('shared/muzzled.json');
+    const configDB = new SimpleJsonDB('shared/config.json');
+    if (!message.guild || message.author.bot) return;
+
+    const muzzleTime = muzzledDB.get(message.author.id);
+    if (muzzleTime) {
         if (muzzleTime < Date.now()) {
-            muzzled.delete(message.author.id);
-            log.warn(`Unmuzzled ${message.author.tag}`)
+            muzzledDB.delete(message.author.id);
+            log.warn(`Unmuzzled ${message.author.tag}`);
             return;
         }
-        log.info(`Muzzling text from ${message.author.tag}`)
-        const _muzzledMessage = await muzzleHelper.borkify(message.content + '')
-        const webhook = await message.channel.fetchWebhooks();
-        const user = await client.users.fetch(message.author.id);
-        const guild = await client.guilds.fetch(message.guild.id);
-        
-        const userOptions = options.get(user.id) || null
-        let muzzledMessage = await blacklistF(_muzzledMessage, userOptions);
-        const shouldBypass = userOptions ? userOptions.allowBypass : false;
-        if (shouldBypass) {
-           const wordsInBrackets = message.content.match(/\{([^}]+)\}/g);
-              if (wordsInBrackets) {
+
+        log.info(`Muzzling text from ${message.author.tag}`);
+        const transformedMessage = await muzzleHelper.borkify(message.content);
+        const userOptions = configDB.get(message.author.id) || {};
+        let muzzledMessage = await blacklistFilter(transformedMessage, userOptions);
+
+        if (userOptions.allowBypass) {
+            const wordsInBrackets = message.content.match(/\{([^}]+)\}/g);
+            if (wordsInBrackets) {
                 muzzledMessage += `\n||${wordsInBrackets.join(' ')}||`;
-              }
+            }
         }
 
-
-        if (webhook.size === 0) {
+        const webhooks = await message.channel.fetchWebhooks();
+        if (webhooks.size === 0) {
             await message.delete();
-
             const newWebhook = await message.channel.createWebhook({
-                name: user.username,
-                avatar: user.avatarURL({ dynamic: true }),
+                name: message.author.username,
+                avatar: message.author.avatarURL({ dynamic: true }),
             });
-
             await newWebhook.send({
                 content: muzzledMessage.replace(/@/g, '@\u200B'),
-                username: user.username,
-                avatarURL: user.avatarURL({ dynamic: true }),
+                username: message.author.username,
+                avatarURL: message.author.avatarURL({ dynamic: true }),
             });
         } else {
             try {
-                const firstWebhook = webhook.first();
+                const firstWebhook = webhooks.first();
                 await message.delete();
                 await firstWebhook.send({
                     content: muzzledMessage.replace(/@/g, '@\u200B'),
-                    username: user.username,
-                    avatarURL: user.avatarURL({ dynamic: true }),
+                    username: message.author.username,
+                    avatarURL: message.author.avatarURL({ dynamic: true }),
                 });
             } catch (error) {
-                if (!error) return;
                 log.warn(error);
                 await message.delete();
-
                 const newWebhook = await message.channel.createWebhook({
-                    name: user.username,
-                    avatar: user.avatarURL({ dynamic: true }),
+                    name: message.author.username,
+                    avatar: message.author.avatarURL({ dynamic: true }),
                 });
-
                 await newWebhook.send({
                     content: muzzledMessage.replace(/@/g, '@\u200B'),
-                    username: user.username,
-                    avatarURL: user.avatarURL({ dynamic: true }),
+                    username: message.author.username,
+                    avatarURL: message.author.avatarURL({ dynamic: true }),
                 });
             }
         }
     }
 });
 
-
-client.on(Discord.Events.InteractionCreate, async interaction => {
+// Handle command interactions
+client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
-    const command = interaction.client.commands.get(interaction.commandName);
-
+    const command = client.commands.get(interaction.commandName);
     if (!command) {
         log.warn(`No command matching ${interaction.commandName} was found.`);
         return;
@@ -171,13 +168,14 @@ client.on(Discord.Events.InteractionCreate, async interaction => {
         await command.execute(interaction);
     } catch (error) {
         log.warn(error);
+        const replyOptions = { content: 'There was an error while executing this command!', ephemeral: true };
         if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+            await interaction.followUp(replyOptions);
         } else {
-            await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+            await interaction.reply(replyOptions);
         }
     }
 });
 
-client.login(process.env.auth_token);
-
+// Log in to Discord
+client.login(process.env.AUTH_TOKEN);
