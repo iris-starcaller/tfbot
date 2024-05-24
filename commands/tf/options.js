@@ -23,7 +23,8 @@ module.exports = {
                         .setRequired(true)
                         .addChoices(
                             { name: 'add', value: 'add' },
-                            { name: 'remove', value: 'remove' }
+                            { name: 'remove', value: 'remove' },
+                            { name: 'clear (put anything in word)', value: 'clear' }
                         )
                 )
                 .addStringOption(option =>
@@ -125,6 +126,10 @@ module.exports = {
 
         switch (subcommand) {
             case 'blacklist':
+                if (action === 'clear') {
+                    userDBentry.blacklist = [];
+                    break;
+                }
                 handleListUpdate(userDBentry, 'blacklist', action, word.toLowerCase());
                 break;
             case 'whitelist':
