@@ -6,7 +6,7 @@ const muzzleHelper = require('./utilities/helpers/muzzleHelper');
 const SimpleJsonDB = require('simple-json-db');
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, GatewayIntentBits, Events, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, Events, Collection, ActivityType } = require('discord.js');
 
 // Initialize Discord client with necessary intents
 const client = new Client({
@@ -39,9 +39,28 @@ for (const folder of commandFolders) {
     }
 }
 
-// Log when the client is ready
+// Log when the client is ready and set the activity
+/*
+export interface ActivitiesOptions extends Omit<ActivityOptions, 'shardId'> {}
+
+export interface ActivityOptions {
+  name: string;
+  state?: string;
+  url?: string;
+  type?: ActivityType;
+  shardId?: number | readonly number[];
+}
+
+export interface PresenceData {
+  status?: PresenceStatusData;
+  afk?: boolean;
+  activities?: readonly ActivitiesOptions[];
+  shardId?: number | readonly number[];
+}
+*/
 client.once(Events.ClientReady, client => {
     log.info(`Logged in as ${client.user.tag}`);
+    client.user.setActivity({ name: 'with pups', type: ActivityType.Playing });
 });
 
 /**
