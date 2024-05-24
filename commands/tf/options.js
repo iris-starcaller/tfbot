@@ -90,8 +90,6 @@ module.exports = {
             subcommand
                 .setName('viewconfig')
                 .setDescription('View your current muzzle configuration.')
-
-
         )
         .addSubcommand(subcommand =>
             subcommand
