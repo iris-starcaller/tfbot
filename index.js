@@ -106,8 +106,8 @@ function blacklistFilter(message, options) {
         }
     });
 }
-
-// Handle incoming messages
+let isFirst = true;
+let analytics = [];
 client.on(Events.MessageCreate, async message => {
     if (message.channel.type === 11 || message.channel.type === 'GUILD_PRIVATE_THREAD') return;
 
@@ -123,23 +123,12 @@ client.on(Events.MessageCreate, async message => {
             return;
         }
 
-        log.info(`Muzzling text from ${message.author.tag}`);
         const userOptions = configDB.get(message.author.id) || {};
-/*
-
-module.exports = {
-    borkify,
-    catify,
-    wolfify,
-    gagify,
-    donkeyfy,
-    getResponse,
-    muzzle,
-    unmuzzle,
-};
-*/
-        // determine the muzzle type
         const muzzleType = userOptions.type || 'dog';
+        if (message.content.length === 0) return;
+        if (message.content == '') return;
+        log.info(`Muzzling text from ${message.author.tag}, using ${muzzleType} muzzle.`);
+        const trackTime = Date.now();
         let transformedMessage = message.content;
         switch (muzzleType) {
             case 'dog':
@@ -161,9 +150,26 @@ module.exports = {
                 transformedMessage = await muzzleHelper.borkify(message.content);
                 break;
         }
-        
+        let appendMessage = '';
+        if (isFirst) {
+            if (Date.now() - trackTime > 1000) {
+                appendMessage = ` (Likely extra time due to first-time loading / initialization)`;
+            }
+        }
+        log.info(`Muzzled message. Content length: ${transformedMessage.length}. Time taken: ${Date.now() - trackTime}ms.${appendMessage}`);
+        analytics.push(Date.now() - trackTime);
+        if (analytics.length > 10) {
+            analytics.shift();
+        }
+        if (analytics.length === 10) {
+            const averageTime = analytics.reduce((a, b) => a + b, 0) / analytics.length;
+            if (Date.now() - trackTime > averageTime * 2) {
+                log.warn(`Muzzle time is ${((Date.now() - trackTime) / averageTime).toFixed(2)} times the average time.`);
+            }
+        }
+        isFirst = false;
 
-        
+
         let muzzledMessage = await blacklistFilter(transformedMessage, userOptions);
 
         if (userOptions.allowBypass) {
