@@ -124,8 +124,46 @@ client.on(Events.MessageCreate, async message => {
         }
 
         log.info(`Muzzling text from ${message.author.tag}`);
-        const transformedMessage = await muzzleHelper.borkify(message.content);
         const userOptions = configDB.get(message.author.id) || {};
+/*
+
+module.exports = {
+    borkify,
+    catify,
+    wolfify,
+    gagify,
+    donkeyfy,
+    getResponse,
+    muzzle,
+    unmuzzle,
+};
+*/
+        // determine the muzzle type
+        const muzzleType = userOptions.type || 'dog';
+        let transformedMessage = message.content;
+        switch (muzzleType) {
+            case 'dog':
+                transformedMessage = await muzzleHelper.borkify(message.content);
+                break;
+            case 'cat':
+                transformedMessage = await muzzleHelper.catify(message.content);
+                break;
+            case 'wolf':
+                transformedMessage = await muzzleHelper.wolfify(message.content);
+                break;
+            case 'gag':
+                transformedMessage = await muzzleHelper.gagify(message.content);
+                break;
+            case 'donkey':
+                transformedMessage = await muzzleHelper.donkeyfy(message.content);
+                break;
+            default:
+                transformedMessage = await muzzleHelper.borkify(message.content);
+                break;
+        }
+        
+
+        
         let muzzledMessage = await blacklistFilter(transformedMessage, userOptions);
 
         if (userOptions.allowBypass) {

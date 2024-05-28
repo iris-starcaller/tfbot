@@ -52,8 +52,8 @@ module.exports = {
             console.log(timeInMs);
         }
         
-
-        await muzzleHelper.muzzle(member, timeInMs);
+        const type = interaction.options.getString('type') || 'dog';
+        await muzzleHelper.muzzle(member, {time: timeInMs, type});
         await interaction.reply({ content: 'Muzzled that silly puppo.'});
     },
 };
