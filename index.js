@@ -141,7 +141,9 @@ client.on(Events.MessageCreate, async message => {
         if (analytics.length === 10) {
             const averageTime = analytics.reduce((a, b) => a + b, 0) / analytics.length;
             if (Date.now() - trackTime > averageTime * 2) {
-                log.warn(`Muzzle time is ${(Date.now() - trackTime / averageTime).toFixed(2)} times the average time.`);
+                log.warn(`Muzzle time for ${message.author.tag} is ${Date.now() - trackTime}ms, which is more than double the average time of ${averageTime}ms.`);
+            } else {
+                log.debug(`Muzzle time for ${message.author.tag} is ${Date.now() - trackTime}ms, which is within the average time of ${averageTime}ms.`);
             }
         }
         isFirst = false;
