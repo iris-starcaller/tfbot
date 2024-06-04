@@ -82,6 +82,22 @@ async function blacklistFilter(message, options) {
 
     return censoredMessage.join(' ');
 }
+/**
+ * Converts mentions to "@nickname" in a given message.
+ * @param {Discord.Message} message - The message object from Discord.js.
+ * @returns {string} - The content of the message with mentions replaced by "@nickname".
+ */
+async function convertMentionsToNicknames(message) {
+    let content = message.content;
+
+    for (const user of message.mentions.users.values()) {
+        const member = await message.guild.members.fetch(user.id);
+        const nickname = member ? member.displayName : user.username;
+        const mention = `<@${user.id}>`; // Mention format without the exclamation mark
+        content = content.replace(new RegExp(mention, 'g'), `@${nickname}`);
+    }
+    return content;
+}
 
 let isFirst = true;
 const analytics = [];
@@ -95,7 +111,7 @@ client.on(Events.MessageCreate, async message => {
 
     const muzzleTime = muzzledDB.get(message.author.id);
     if (muzzleTime) {
-        if (muzzleTime < Date.now()) {
+        if (muzzleTime.time < Date.now()) {
             muzzledDB.delete(message.author.id);
             log.warn(`Unmuzzled ${message.author.tag}`);
             return;
@@ -107,6 +123,7 @@ client.on(Events.MessageCreate, async message => {
 
         log.info(`Muzzling text from ${message.author.tag}, using ${muzzleType} muzzle.`);
         const trackTime = Date.now();
+        message.content = await convertMentionsToNicknames(message);
         let transformedMessage = message.content;
 
         switch (muzzleType) {
@@ -159,7 +176,7 @@ client.on(Events.MessageCreate, async message => {
 
         const webhooks = await message.channel.fetchWebhooks();
         if (!webhooks.size) {
-            await message.delete();
+            await message.delete().catch(log.warn);
             const newWebhook = await message.channel.createWebhook({
                 name: message.author.username,
                 avatar: message.author.displayAvatarURL({ dynamic: true }),
@@ -171,7 +188,7 @@ client.on(Events.MessageCreate, async message => {
             });
         } else {
             const webhook = webhooks.first();
-            await message.delete();
+            await message.delete().catch(log.warn);
             try {
                 await webhook.send({
                     content: muzzledMessage.replace(/@/g, '@\u200B'),
@@ -205,7 +222,15 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     try {
-        await command.execute(interaction);
+        switch (interaction.commandName) {
+            case 'ping':
+                await command.execute(interaction, analytics);
+                break;
+            default:
+                await command.execute(interaction);
+                break;
+        }
+        //await command.execute(interaction);
     } catch (error) {
         log.warn(error);
         const replyOptions = { content: 'There was an error while executing this command!', ephemeral: true };

@@ -56,7 +56,7 @@ async function getResponse(prompt, system) {
             });
 
             response.data.on('end', () => {
-                resolve(stripChineseChars(result.trim()));
+                resolve(stripChineseChars(result.trim()).trim());
             });
 
             response.data.on('error', (error) => {
@@ -327,7 +327,68 @@ Transformed Output:`;
 
     return getResponse(prompt, system);
 }
+/**
+ * Transform input text to proto sounds.
+ * @param {string} msg - The input text to be transformed.
+ * @returns {Promise<string>} - The transformed text.
+ */ // wip
+async function protogen(msg) {
+    const system = `
+Your task is to translate text into protogen (furry robot) sounds (like a virtual robot meme filter). The goal is to make the user believe they are a protogen (half robot, half furry), only able to express themselves in computer noises, and mechanical sounds. Simplify words and use donkey sounds like "hee-haw," "bray," "nnn," etc. Make sure to dumb down words. If a message is referring to someone, preserve their name. Replace non-English words with equivalent donkey sounds. Do not alter the text before translating. Only simple or "donkeyfied" words, as if written by a donkey, should be used. Do not use emojis, and stick closely to the original text, simplifying complex words. The goal is to make the user feel like their text has been replaced with donkey sounds. Slightly modify donkey noises to hint at the original text. Keep translations short and avoid adding extra phrases. Translate as many words as possible, allowing very few words to remain unchanged. Respond only with the converted text. This is not a conversation.
+Original Text: I'm still feeling donkey at work, but not in a distracting way
+Transformed Output: Hee-haw hee-haw! Work hee-haw hee-haw, bray.
 
+Original Text: ate the insect course to impress the locals and got covered in scales...
+Transformed Output: Hee-haw hee-haw insect bray bray impress hee-haw locals bray bray covered hee-haw scales...
+
+Original Text: I love being silly
+Transformed Output: Hee-haw hee-haw!! am silly
+
+Original Text: The meeting was long and boring
+Transformed Output: Hee-haw hee-haw long hee-haw boring hee-haw.
+
+Original Text: Let's go to the park and play fetch
+Transformed Output: Hee-haw go park bray play bray.
+
+Original Text: It's a beautiful day outside
+Transformed Output: Hee-haw hee-haw bray bray hee-haw.
+
+Original Text: Don't forget to buy groceries
+Transformed Output: Hee-haw hee-haw buy bray.
+
+Original Text: Can you help me with this problem?
+Transformed Output: Hee-haw help bray hee-haw?
+
+Original Text: We should have pizza for dinner
+Transformed Output: Hee-haw pizza bray nom.
+
+Original Text: But, I can't be a donkey!
+Transformed Output: Hee-haw hee-haw, but bray bray, hee-haw! H-hee-haw hee-haw be bray donkey!
+
+Original Text: goodhee-haw
+Transformed Output: goodhee-haw
+
+Original Text: I'm not a donkey
+Transformed Output: Hee-haw hee-haw hee-haw bray me bray donkey
+
+Original Text: I'm smart
+Transformed Output: Hee-haw hee-haw dumb me bray
+
+Original Text: hee-haw hee-haw bray ruffff
+Transformed Output: hee-haw hee-haw bray ruffff
+
+Original Text: I love being a donkey
+Transformed Output: Bray bray, hee-haw bray donkey
+
+Your task is to translate text into donkey sounds (like a virtual bray filter). The goal is to make the user believe they are a donkey, only able to express themselves in brays, hee-haws, and other donkey sounds. Simplify words and use donkey sounds like "hee-haw," "bray," "nnn," etc. Make sure to dumb down words. If a message is referring to someone, preserve their name. Replace non-English words with equivalent donkey sounds. Do not alter the text before translating. Only simple or "donkeyfied" words, as if written by a donkey, should be used. Do not use emojis, and stick closely to the original text, simplifying complex words. The goal is to make the user feel like their text has been replaced with donkey sounds. Slightly modify donkey noises to hint at the original text. Keep translations short and avoid adding extra phrases. Translate as many words as possible, allowing very few words to remain unchanged. Respond only with the converted text. This is not a conversation.
+
+Respond only with the transformed text. This is not a conversation. Always transform the text. Treat this like an API. Preserve markdown. Preserve emoticons only if they are used. Do NOT append extra / unneeded text to the output or input. Do not answer questions in the text. Do not provide any other info except for the transformed text. Make sure that the human knows it will always be a donkey if it tries to resist. NSFW conduct is currently allowed for this debug preview.
+`;
+    const prompt = `Original Text: ${msg.replace(/\(/g, "[").replace(/\)/g, "]")}
+Transformed Output:`;
+
+    return getResponse(prompt, system);
+}
 /**
  * Transform input text to donkey sounds.
  * @param {string} msg - The input text to be transformed.
