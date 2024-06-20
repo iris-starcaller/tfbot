@@ -30,7 +30,7 @@ const axiosInstance = axios.create({
 async function getResponse(prompt, system) {
     try {
         const response = await axiosInstance.post("http://localhost:11434/api/generate", {
-            model: "qwen:7b",
+            model: "qwen2",
             prompt,
             system,
             stream: true,
