@@ -243,4 +243,4 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 // Log in to Discord
-client.login(process.env.AUTH_TOKEN);
+client.login(process.env.auth_token);
